@@ -124,7 +124,7 @@ function addFileContainer() {
 
 	console.log(fileName)
 
-	$(".dform_filenames").append('<span> <img style="width: 96px; height: 96px" class="file_thumbnail" src='+ fileThumbnail  + '>' + fileName + '<span class="file_delete">4</span></span>');
+	$(".dform_filenames").append('<span> <img style="width: 196px; height: 196px" class="file_thumbnail" src='+ fileThumbnail  + '>' + fileName + '<span class="file_delete">4</span></span>');
          //<img class="obj" src="C:/fakepath/peacock-clean.jpg">
 
      $("#custom_fileupload").attr("value", "");
