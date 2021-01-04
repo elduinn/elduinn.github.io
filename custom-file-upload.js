@@ -21,18 +21,24 @@ function imitateKdfReady (event, kdf) {
 
 	if(CustomFileUploadWidget.length>0){
 
-        	var widget = '<div data-type="file" data-name="file_ootb" data-active="true" data-agentonly="false" class="container dform_widget  dform_widget_field dform_widget_type_file dform_widget_file_ootb dform_widget_ file-progress">' + 
+        	var widget = '<div data-type="file" data-name="file_ootb" data-active="true" data-agentonly="false" class="file-progress">' + 
 							  '<div><input id="custom_fileupload" type="file" name="uploadedFile">' +
 							'<div class="dform_fileupload_progressbar" id="custom_fileupload_progressbar"></div>'+
-							 '<div class="dform_filenames" id="custom_fileupload_files"></div><br><br></div>'+
+							 '<div class="filenames" id="custom_fileupload_files"></div><br><br></div>'+
 						  ' </div>'	;
 
 			CustomFileUploadWidget.html(widget);
 			
             formParams.randomNumber = Math.floor((Math.random() * 100000) + 1);
 	}
+	
+	$(document).on('drop dragover', function (e) {
+				e.preventDefault();
+			});
+			
  
     $("#custom_fileupload").change(function(){
+		
 		var fileError= false;
 		var fileName = $("#custom_fileupload")[0].files[0].name;
 		var fileNameClean = fileName.split('.').pop();
@@ -101,18 +107,20 @@ function imitateKdfReady (event, kdf) {
 
      $('body').on('click','img',function(){
 		 
-		 console.log($(this).attr('class'));
+		 if(KDF.kdf().form.readonly){
 		 
-		 formParams.imgClickSelector = $(this).attr('class');
-		 KDF.customdata('sharepoint_token', 'imgClickEvent', true, true, {});
-		
+			console.log($(this).attr('class').closest);
+		 
+			formParams.imgClickSelector = $(this).attr('class');
+			KDF.customdata('sharepoint_token', 'imgClickEvent', true, true, {});
+		 }
 	  })
 	  
 	   $('body').on('click','.delete_file',function(){
 		 
-		 console.log($(this).attr('class'));
+		 console.log($(this).closest('span').attr('id'));
 		 
-		 formParams.imgClickSelector = $(this).attr('class');
+		 formParams.deleteFileSelector = $(this).closest('span').attr('id');
 		 KDF.customdata('sharepoint_token', 'imgClickEvent', true, true, {});
 		
 	  })
@@ -125,9 +133,13 @@ function imitateKDFCustom (response, action) {
         if (action === 'sharepoint_token') {
         	var access_token = response.data['access_token'];
 
-        	if (!KDF.kdf().form.readonly) {
+        	if (!KDF.kdf().form.readonly && formParams.deleteFileSelector == '') {
                 sharepointFileUploader(access_token);
-        	} else if (KDF.kdf().form.readonly && formParams.imgClickSelector == '') {
+        	} else if (!KDF.kdf().form.readonly && formParams.deleteFileSelector !== '') {
+                deleteFile(access_token);
+        	} 
+			
+			if (KDF.kdf().form.readonly && formParams.imgClickSelector == '') {
         		//sharepointFileThumbnail (itemID, access_token)
 				console.log('asfsafs');
 				if (KDF.getVal('txt_filename_one') !== ''){
@@ -204,7 +216,7 @@ function sharepointFileThumbnail (itemID, access_token, widgetName){
 				KDF.setVal('txt_filename_two_thumb', response.value[0].medium['url']);
 			}
 	
-			setTimeout(function(){ addFileContainer(); $(".dform_fileupload_progressbar").html("<div style='width: 80%;'>"); }, 1000);
+			setTimeout(function(){ addFileContainer(); $(".dform_fileupload_progressbar").html("<div style='width: 100%;'>"); }, 1000);
 		} else {
 				var thumbnailUrl = response.value[0].medium['url'];
 				var html;
@@ -235,14 +247,12 @@ function addFileContainer() {
          fileThumbnail = KDF.getVal('txt_filename_two_thumb');
 		 widgetName = 'txt_filename_two';
 	}
-
+	//$(".dform_fileupload_progressbar").html("<div style='width: 100%;'>");
 	console.log(fileName)
 
-	$(".dform_filenames").append('<span> <img id="file_container" style="width: 196px; height: 196px" class="'+ widgetName  +'" src='+ fileThumbnail  + '>' + fileName + '<span class="delete_file">4</span></span>');
-         //<img class="obj" src="C:/fakepath/peacock-clean.jpg">
+	$(".filenames").append('<span class="' + widgetName + '"> <img id="file_container" style="width: 196px; height: 196px" class="'+ widgetName  +'" src='+ fileThumbnail  + '><div>' + fileName + '<span id="' + widgetName +  '" style="font-weight:bold;" class="delete_file">4</span></div></span>');
 
      //$("#custom_fileupload").attr("value", "");
-     $(".dform_fileupload_progressbar").html("<div style='width: 99%;'>");
 }
 
 function sharepointDownloadFile(access_token) {
@@ -255,19 +265,127 @@ function sharepointDownloadFile(access_token) {
 		sharepointID = KDF.getVal('txt_sharepointID_two');
 	}
 	console.log
-	var getFileURL = formParams.fileUploadUrl + sharepointID + '/content';
+	var getFileURL = formParams.fileUploadUrl + sharepointID + '/preview';
 	
 	$.ajax({
     url: getFileURL, 
-	crossDomain: true,
-    headers: {Authorization: access_token, 'Content-Type': 'text/plain'},
-    method: 'GET',
-	dataType: 'text'
-    
-    }).done(function(response) {
-    	//console.log(response);
- 
-    });
+    headers: {Authorization: access_token},
+    type: 'POST'
+	
+	}).done(function(response) {
+		//console.log(response.getUrl)
+		
+		window.open(response.getUrl);
+	}).fail(function() {
+		
+	});
+	
+	formParams.imgClickSelector = '';
+}
+
+function deleteFile (access_token){
+	
+	var fileID;
+	var selector = formParams.deleteFileSelector;
+	
+	if (formParams.deleteFileSelector.includes('one')) {
+			fileID = KDF.getVal('txt_sharepointID_one')
+	} else if (formParams.deleteFileSelector.includes('two')) {
+			fileID = KDF.getVal('txt_sharepointID_two')
+	}
+
+    var deleteURL = formParams.fileUploadUrl + fileID;
+    console.log(deleteURL);
+	
+    $.ajax({
+    	url: deleteURL, 
+    	processData: false,
+    	headers: {'Authorization': access_token},
+    	method: 'DELETE'
+		
+	}).done(function(response) {
+		
+		console.log('done')
+		console.log(selector)
+		if (selector.includes('one')) {
+			console.log('doneasdasd')
+			$('span.txt_filename_one').remove()
+			KDF.setVal('txt_sharepointID_one', '')
+			KDF.setVal('txt_filename_one', '')
+			KDF.setVal('txt_filename_one_thumb', '')
+			
+		} else if (selector.includes('two')) {
+			console.log('done82182813')
+			$('span.txt_filename_two').remove()
+			KDF.setVal('txt_sharepointID_two', '')
+			KDF.setVal('txt_filename_two', '')
+			KDF.setVal('txt_filename_two_thumb', '')
+		}
+				
+	}).fail(function() {
+		KDF.showError('Delete file has failed, please try again');
+	});
+	
+	formParams.deleteFileSelector = '';
+}
+
+function aasharepointDownloadFile(access_token) {
+	var selector = formParams.imgClickSelector;
+	var sharepointID;
+	
+	if (selector === 'txt_filename_one'){
+		sharepointID = KDF.getVal('txt_sharepointID_one');
+	} else {
+		sharepointID = KDF.getVal('txt_sharepointID_two');
+	}
+	console.log
+	var getFileURL = formParams.fileUploadUrl + sharepointID + '/content';
+	/*
+	$.ajax({
+    url: getFileURL, 
+    headers: {Authorization: access_token},
+    type: 'GET',
+	dataType: 'json',
+    complete: function(response) {
+		//console.log(data)
+		console.log(response.getAllResponseHeaders)
+		console.log(response)
+		
+		console.log('asd')
+			if (response.redirect) {
+				// data.redirect contains the string URL to redirect to
+				window.location.href = response.redirect;
+			}
+		}
+		
+    }).fail(function( jqXHR, textStatus ) {
+			//console.log(jqXHR.getAllResponseHeaders)
+			console.log(textStatus)
+	});
+	*/
+	
+	var xmlhttp = new XMLHttpRequest();
+  xmlhttp.onreadystatechange = function() {
+      // return if not ready state 4
+      if (this.readyState !== 4) {
+        return;
+      }
+console.log('123123123123')
+      // check for redirect
+      if (this.status === 302 /* or may any other redirect? */) {
+        var location = this.getResponseHeader("Location");
+        //return ajax.call(this, location /*params*/, callback);
+		console.log(location)
+		console.log('asdfasfd')
+      } 
+
+      // return data
+     // var data = JSON.parse(this.responseText);
+      //callback(data);
+  };
+  xmlhttp.open("GET", getFileURL, true);
+  xmlhttp.setRequestHeader('Authorization', access_token)
+  xmlhttp.send();
 	
 	formParams.imgClickSelector = '';
 }
