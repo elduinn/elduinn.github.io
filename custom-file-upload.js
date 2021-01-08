@@ -6,6 +6,8 @@ var formParams = {
 	maxFileSize: '4000000',
 	imgClickSelector: '',
 	deleteFileSelector: '',
+	kdfSaveFlag: false,
+	full_classification: '',
 	fileUploadUrl: 'https://graph.microsoft.com/v1.0/sites/enfield365.sharepoint.com,8aefec91-2c1c-46fd-b8b3-5432b919e464,02b1cf68-eb76-454d-b501-e1642db1f5d9/drive/items/'
 }
 
@@ -95,7 +97,12 @@ function imitateKdfReady (event, kdf) {
                 setFileBlobData(reader.result);
                 
                 $(".dform_fileupload_progressbar").html("<div style='width: 30%;'>");
-                KDF.customdata('sharepoint_token', 'imitateKdfReady', true, true, {});
+				
+				if (!formParams.kdfSaveFlag) {
+					KDF.save();
+				} else {
+					KDF.customdata('sharepoint_token', 'imitateKdfReady', true, true, {});
+				}
 
               };
 		}
@@ -132,8 +139,14 @@ function imitateKdfReady (event, kdf) {
 function imitateKDFCustom (response, action) {
         if (action === 'sharepoint_token') {
         	var access_token = response.data['access_token'];
-
+			//console.log(response.data['full_classification']);
         	if (!KDF.kdf().form.readonly && formParams.deleteFileSelector == '') {
+				if (!formParams.kdfSaveFlag){
+					console.log(response.data['full_classification']);
+					formParams.kdfSaveFlag = true;
+					formParams.full_classification = response.data['full_classification'];
+				}
+				
                 sharepointFileUploader(access_token);
         	} else if (!KDF.kdf().form.readonly && formParams.deleteFileSelector !== '') {
                 deleteFile(access_token);
@@ -157,20 +170,32 @@ function imitateKDFCustom (response, action) {
         }
 }
 
+function imitateKDFSave() {
+	
+	if (!formParams.kdfSaveFlag) {
+		
+		$('#dform_successMessage').remove();
+		//console.log(KDF.kdf().form.caseid)
+		//formParams.kdfSaveFlag = true;
+		KDF.customdata('sharepoint_token', 'imitateKdfReady', true, true, {'SaveForm': 'true', 'caseid': KDF.kdf().form.caseid});
+	}
+}
+
 function sharepointFileUploader (access_token){
 	var fileName = $("#custom_fileupload")[0].files[0].name;
 	var fileSize = $("#custom_fileupload")[0].files[0].size;
 	console.log(fileSize);
 
-    var uploadURL = formParams.fileUploadUrl + 'root:/DFORM_FILES/' + formParams.randomNumber + '/' + fileName + ':/content';
+    var uploadURL = formParams.fileUploadUrl + 'root:/DFORM_FILES/' + formParams.full_classification + '/' + KDF.kdf().form.caseid + '/' + fileName + ':/content';
     console.log(uploadURL);
     $(".dform_fileupload_progressbar").html("<div style='width: 50%;'>");
     console.log(formParams.fileBlob)
     $.ajax({
     	url: uploadURL, 
     	dataType: 'json',
+		contentType: 'image/jpeg',
     	processData: false,
-    	headers: {'Authorization': access_token},
+    	headers: {'Authorization': access_token, 'Content-Type': 'image/jpeg'},
     	data: formParams.fileBlob,
     	method: 'PUT',
     
