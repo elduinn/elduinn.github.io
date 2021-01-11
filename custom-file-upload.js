@@ -23,8 +23,10 @@ function imitateKdfReady (event, kdf) {
 
 	if(CustomFileUploadWidget.length>0){
 
-        	var widget = '<div data-type="file" data-name="file_ootb" data-active="true" data-agentonly="false" class="file-progress">' + 
-							  '<div><input id="custom_fileupload" type="file" name="uploadedFile">' +
+        	var widget = '<div data-type="file" data-name="file_ootb" data-active="true" data-agentonly="false" class="file-progress lbe-file-gov">' + 
+							  '<div style="position: relative;"><input id="custom_fileupload" type="file" name="uploadedFile">' + 
+							  '<span class="file-gov-icon"><span class="file-gov-icon-a"></span><span class="file-gov-icon-b"></span><label class="file-gov-text">Upload file</label></span>' +
+							  '<div class="helptext">Image file types accepted are .jpeg, .jpg or .png up to 4MB in size</div>' +
 							'<div class="dform_fileupload_progressbar" id="custom_fileupload_progressbar"></div>'+
 							 '<div class="filenames" id="custom_fileupload_files"></div><br><br></div>'+
 						  ' </div>'	;
@@ -182,6 +184,7 @@ function imitateKDFSave() {
 }
 
 function sharepointFileUploader (access_token){
+	KDF.lock();
 	var fileName = $("#custom_fileupload")[0].files[0].name;
 	var fileSize = $("#custom_fileupload")[0].files[0].size;
 	console.log(fileSize);
@@ -207,9 +210,11 @@ function sharepointFileUploader (access_token){
         if(KDF.getVal('txt_sharepointID_one') == ''){
         	KDF.setVal('txt_sharepointID_one', response.id);
         	KDF.setVal('txt_filename_one', fileName);
+			KDF.setVal('txt_sharepoint_link_one', response['@microsoft.graph.downloadUrl']);
         } else {
         	KDF.setVal('txt_sharepointID_two', response.id);
         	KDF.setVal('txt_filename_two', fileName);
+			KDF.setVal('txt_sharepoint_link_two', response['@microsoft.graph.downloadUrl']);
         }
 
     });
@@ -256,6 +261,8 @@ function sharepointFileThumbnail (itemID, access_token, widgetName){
     });
 	
 	$("#custom_fileupload").prop('disabled', false);
+	
+	
 }
 
 function addFileContainer() {
@@ -278,6 +285,8 @@ function addFileContainer() {
 	$(".filenames").append('<span class="' + widgetName + '"> <img id="file_container" style="width: 196px; height: 196px" class="'+ widgetName  +'" src='+ fileThumbnail  + '><div>' + fileName + '<span id="' + widgetName +  '" style="font-weight:bold;" class="delete_file">4</span></div></span>');
 
      //$("#custom_fileupload").attr("value", "");
+	 
+	 KDF.unlock();
 }
 
 function sharepointDownloadFile(access_token) {
