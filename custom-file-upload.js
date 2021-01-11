@@ -68,7 +68,7 @@ function imitateKdfReady (event, kdf) {
 			});
 			
 			if (fileError) {
-					KDF.showError('File type is not allowed');
+					KDF.showError('Incorrect file type selected.');
 			}
 		}
 		
@@ -79,7 +79,7 @@ function imitateKdfReady (event, kdf) {
 					fileError = false;
 			} else {
 					fileError = true;
-					KDF.showError('Maximum file upload has reach');
+					KDF.showError('Maximum file upload has been reach');
 			}
 				
 		}
