@@ -190,7 +190,7 @@ function sharepointFileUploader (access_token){
 	var fileSize = $("#custom_fileupload")[0].files[0].size;
 	console.log(fileSize);
 
-    var uploadURL = formParams.fileUploadUrl + 'root:/DFORM_FILES/' + formParams.full_classification + '/' + KDF.kdf().form.caseid + '/' + fileName + ':/content';
+    var uploadURL = formParams.fileUploadUrl + 'root:/Verint/' + formParams.full_classification + '/' + KDF.kdf().form.caseid + '/' + fileName + ':/content';
     console.log(uploadURL);
     $(".dform_fileupload_progressbar").html("<div style='width: 50%;'>");
     console.log(formParams.fileBlob)
@@ -253,7 +253,7 @@ function sharepointFileThumbnail (itemID, access_token, widgetName){
 				var html;
 		
 				html =	'<div id="' + widgetName + '"style="float: left;">' +
-				'<div style="margin-right: 100px"><img style="width: 196px; height: 196px" class="' + widgetName + '"src=' + thumbnailUrl + '></img></div><div>' + KDF.getVal(widgetName) + '</div></div>';
+				'<div style="margin-right: 10px"><img style="width: 196px; height: 196px" class="' + widgetName + '"src=' + thumbnailUrl + '></img></div><div>' + KDF.getVal(widgetName) + '</div></div>';
 		
 				console.log(html)
 		
